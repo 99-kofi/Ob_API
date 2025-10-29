@@ -61,6 +61,20 @@ if "api_key" in st.session_state:
             data = res.json()
             st.info(f"OBALA says: {data['response']}")
             if data.get("audio"):
-                st.audio(data["audio"], format="audio/mp3")
+                # Check if the API returned valid audio data
+if "audio" in data and data["audio"]:
+    try:
+        # Some APIs return base64-encoded audio
+        import base64
+        from io import BytesIO
+
+        audio_bytes = base64.b64decode(data["audio"])
+        st.audio(BytesIO(audio_bytes), format="audio/mp3")
+    except Exception as e:
+        st.error(f"Failed to play audio: {e}")
+else:
+    st.warning("No audio received from the OBALA API.")
+
+               
         else:
             st.error(res.json().get("error", "Something went wrong."))
