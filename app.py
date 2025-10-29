@@ -28,7 +28,7 @@ if choice == "Signup":
             res = requests.post(f"{API_BASE_URL}/signup", json=payload)
             if res.status_code == 201:
                 data = res.json()
-                st.success(f"✅ Account created successfully!")
+                st.success("✅ Account created successfully!")
                 st.code(f"Your API Key: {data['api_key']}")
             else:
                 st.error(res.json().get("error", "Signup failed!"))
@@ -73,18 +73,11 @@ if "api_key" in st.session_state:
                 data = res.json()
                 st.info(f"🗣️ OBALA says: {data['response']}")
 
-                # --- AUDIO HANDLING ---
+                # --- PLAY AUDIO (always WAV) ---
                 if "audio" in data and data["audio"]:
                     try:
                         audio_bytes = base64.b64decode(data["audio"])
-
-                        # Auto-detect format or fallback to WAV
-                        audio_format = "audio/wav"
-                        if "format" in data and data["format"] == "mp3":
-                            audio_format = "audio/mp3"
-
-                        st.audio(BytesIO(audio_bytes), format=audio_format)
-
+                        st.audio(BytesIO(audio_bytes), format="audio/wav")
                     except Exception as e:
                         st.error(f"🎧 Failed to play audio: {e}")
                 else:
