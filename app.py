@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-API_BASE_URL = "https://obala-api.onrender.com"  # change this when deploying
+API_BASE_URL = "https://obala-api.onrender.com"  # change to your deployed URL later
 
 st.set_page_config(page_title="OBALA Login", layout="centered")
 
@@ -58,17 +58,19 @@ if "api_key" in st.session_state:
         headers = {"X-API-Key": st.session_state["api_key"]}
         payload = {"prompt": user_prompt}
 
-        res = requests.post(f"{API_BASE_URL}/obala_chat", json=payload, headers=headers)
+        try:
+            res = requests.post(f"{API_BASE_URL}/obala_chat", json=payload, headers=headers)
+            if res.status_code == 200:
+                data = res.json()
+                st.info(f"OBALA says: {data['response']}")
 
-        if res.status_code == 200:
-            data = res.json()
-            st.info(f"OBALA says: {data['response']}")
-
-            # Handle audio file path directly
-            if "audio" in data and data["audio"]:
-                st.success("🎧 OBALA generated an audio reply!")
-                st.text(f"Audio file path: {data['audio']}")
+                # ✅ Show the audio file path if returned
+                if "audio" in data and data["audio"]:
+                    st.success("🎧 OBALA generated an audio reply!")
+                    st.markdown(f"**Audio file path:** `{data['audio']}`")
+                else:
+                    st.warning("No audio file path returned from the API.")
             else:
-                st.warning("No audio file path returned from the API.")
-        else:
-            st.error(res.json().get("error", "Something went wrong."))
+                st.error(res.json().get("error", "Something went wrong."))
+        except Exception as e:
+            st.error(f"⚠️ Error: {e}")
