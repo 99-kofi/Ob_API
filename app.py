@@ -1,7 +1,8 @@
 import streamlit as st
 import requests
+import json
 
-API_BASE_URL = "https://obala-api.onrender.com"  # change to your deployed URL later
+API_BASE_URL = "https://obala-api.onrender.com"  # your deployed API URL
 
 st.set_page_config(page_title="OBALA Login", layout="centered")
 
@@ -62,14 +63,20 @@ if "api_key" in st.session_state:
             res = requests.post(f"{API_BASE_URL}/obala_chat", json=payload, headers=headers)
             if res.status_code == 200:
                 data = res.json()
-                st.info(f"OBALA says: {data['response']}")
 
-                # ✅ Show the audio file path if returned
-                if "audio" in data and data["audio"]:
+                # 🔍 Debug the full API response
+                st.markdown("### 🧩 Raw API Response")
+                st.json(data)
+
+                st.info(f"OBALA says: {data.get('response', 'No text response')}")
+
+                # ✅ Show audio file path (if exists)
+                audio_path = data.get("audio") or data.get("audio_path") or None
+                if audio_path:
                     st.success("🎧 OBALA generated an audio reply!")
-                    st.markdown(f"**Audio file path:** `{data['audio']}`")
+                    st.markdown(f"**Audio file path:** `{audio_path}`")
                 else:
-                    st.warning("No audio file path returned from the API.")
+                    st.warning("No audio file path found in the response.")
             else:
                 st.error(res.json().get("error", "Something went wrong."))
         except Exception as e:
