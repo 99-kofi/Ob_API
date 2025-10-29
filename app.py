@@ -3,6 +3,7 @@ import requests
 import base64
 from io import BytesIO
 
+# --- CONFIG ---
 API_BASE_URL = "https://obala-api.onrender.com"  # change to your deployed URL later
 
 st.set_page_config(page_title="OBALA Login", layout="centered")
@@ -13,7 +14,7 @@ st.subheader("Developed by WAIT Technologies")
 menu = ["Login", "Signup"]
 choice = st.sidebar.selectbox("Select Option", menu)
 
-# --- Signup Page ---
+# --- SIGNUP PAGE ---
 if choice == "Signup":
     st.subheader("Create an Account")
 
@@ -27,13 +28,14 @@ if choice == "Signup":
             res = requests.post(f"{API_BASE_URL}/signup", json=payload)
             if res.status_code == 201:
                 data = res.json()
-                st.success(f"Account created successfully! 🎉 Your API Key: {data['api_key']}")
+                st.success(f"✅ Account created successfully!")
+                st.code(f"Your API Key: {data['api_key']}")
             else:
                 st.error(res.json().get("error", "Signup failed!"))
         except Exception as e:
-            st.error(f"Connection error: {e}")
+            st.error(f"⚠️ Connection error: {e}")
 
-# --- Login Page ---
+# --- LOGIN PAGE ---
 else:
     st.subheader("Login to OBALA")
 
@@ -46,17 +48,19 @@ else:
             res = requests.post(f"{API_BASE_URL}/login", json=payload)
             if res.status_code == 200:
                 data = res.json()
-                st.success("Login successful ✅")
+                st.success("✅ Login successful!")
                 st.code(f"Your API Key: {data['api_key']}")
                 st.session_state["api_key"] = data["api_key"]
             else:
                 st.error(res.json().get("error", "Login failed!"))
         except Exception as e:
-            st.error(f"Connection error: {e}")
+            st.error(f"⚠️ Connection error: {e}")
 
-# --- After Login ---
+# --- AFTER LOGIN (OBALA CHAT) ---
 if "api_key" in st.session_state:
+    st.divider()
     st.subheader("💬 Try OBALA Chat")
+
     user_prompt = st.text_area("Enter your question in Twi or English")
 
     if st.button("Send to OBALA"):
@@ -67,18 +71,26 @@ if "api_key" in st.session_state:
             res = requests.post(f"{API_BASE_URL}/obala_chat", json=payload, headers=headers)
             if res.status_code == 200:
                 data = res.json()
-                st.info(f"OBALA says: {data.get('response', 'No text response received.')}")
+                st.info(f"🗣️ OBALA says: {data['response']}")
 
-                # --- Safe Audio Playback ---
+                # --- AUDIO HANDLING ---
                 if "audio" in data and data["audio"]:
                     try:
                         audio_bytes = base64.b64decode(data["audio"])
-                        st.audio(BytesIO(audio_bytes), format="audio/mp3")
+
+                        # Auto-detect format or fallback to WAV
+                        audio_format = "audio/wav"
+                        if "format" in data and data["format"] == "mp3":
+                            audio_format = "audio/mp3"
+
+                        st.audio(BytesIO(audio_bytes), format=audio_format)
+
                     except Exception as e:
-                        st.error(f"Failed to play audio: {e}")
+                        st.error(f"🎧 Failed to play audio: {e}")
                 else:
-                    st.warning("No audio received from the OBALA API.")
+                    st.warning("No audio received from OBALA API.")
             else:
                 st.error(res.json().get("error", "Something went wrong."))
+
         except Exception as e:
-            st.error(f"Connection error: {e}")
+            st.error(f"🚨 Request error: {e}")
