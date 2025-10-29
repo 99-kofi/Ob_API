@@ -73,11 +73,20 @@ if "api_key" in st.session_state:
                 data = res.json()
                 st.info(f"🗣️ OBALA says: {data['response']}")
 
-                # --- PLAY AUDIO (always WAV) ---
-                if "audio" in data and data["audio"]:
+                # --- HANDLE AUDIO ---
+                audio_data = data.get("audio")
+
+                if audio_data:
                     try:
-                        audio_bytes = base64.b64decode(data["audio"])
-                        st.audio(BytesIO(audio_bytes), format="audio/wav")
+                        if audio_data.startswith("http"):  # Public link
+                            st.audio(audio_data, format="audio/wav")
+                        elif audio_data.endswith(".wav") or "/" in audio_data:  # Local path
+                            with open(audio_data, "rb") as f:
+                                st.audio(f.read(), format="audio/wav")
+                        else:
+                            # Try base64 decoding
+                            audio_bytes = base64.b64decode(audio_data)
+                            st.audio(BytesIO(audio_bytes), format="audio/wav")
                     except Exception as e:
                         st.error(f"🎧 Failed to play audio: {e}")
                 else:
